@@ -4,6 +4,7 @@ require "bundler/setup"
 require 'yaml'
 require 'twitter'
 
+
 y = YAML.load_file('secret.yml')
 
 Twitter.configure do |c|
