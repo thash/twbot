@@ -28,15 +28,17 @@ class Bookmark
   include Mongoid::Document
   include Mongoid::Timestamps
 
-  field :title, type: String
-  field :link, type: String
-  field :blink, type: String
-  field :time, type: DateTime
-  field :bcnt, type: Integer
+  field :title,      type: String
+  field :link,       type: String
+  field :blink,      type: String
+  field :time,       type: DateTime
+  field :bcnt,       type: Integer
+  field :remind_cnt, type: Integer, default: 0
+  field :closed,     type: Boolean, default: false
 
   has_and_belongs_to_many :tags
 
-  validates_presence_of :title, :link
+  validates_presence_of :title, :link, :blink
   validates_uniqueness_of :blink
 end
 
@@ -46,6 +48,7 @@ class Tag
   field :text, type: String
 
   has_and_belongs_to_many :bookmarks
+  validates_uniqueness_of :text
 end
 
 
