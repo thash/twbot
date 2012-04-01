@@ -64,6 +64,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport
   bson_ext
   mechanize
   mongoid

@@ -6,3 +6,4 @@ gem "pry"
 gem "mechanize"
 gem "mongoid"
 gem "bson_ext"
+gem 'activesupport'

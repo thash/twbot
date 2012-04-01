@@ -40,6 +40,8 @@ class Bookmark
 
   validates_presence_of :title, :link, :blink
   validates_uniqueness_of :blink
+
+  index [:time, Mongo::DESCENDING], :background => true
 end
 
 class Tag
@@ -49,6 +51,8 @@ class Tag
 
   has_and_belongs_to_many :bookmarks
   validates_uniqueness_of :text
+
+  index :text, :background => true
 end
 
 
@@ -88,8 +92,8 @@ def extract_data(doc)
     bcnt  = getcount(link)
     tags  = entry.xpath("dc:subject").map(&:children).map(&:inner_text).reject{|tag| tag == "あとで"}
 
-    @logger.info "[#{Time.now}]    got: #{time.to_s} -- #{title}"
-    @logger.info "[#{Time.now}]    got:   #{blink} (#{bcnt})"
+    @logger.info "[#{Time.now.to_s(:db)}]    got: #{time.to_s} -- #{title}"
+    @logger.info "[#{Time.now.to_s(:db)}]    got:   #{blink} (#{bcnt})"
 
     entries << {
       title: title,
@@ -109,25 +113,23 @@ def text_to_tag(data)
   end
 end
 
-
 def exec(tag, page=0)
-  @logger.info "[#{Time.now}] exec: #{tag} - p.#{page}"
+  @logger.info "[#{Time.now.to_s(:db)}] exec: #{tag} - p.#{page}"
   res = request_bookmarks(URI.escape(tag), page)
   doc = Nokogiri::XML(res.body)
   data = extract_data(doc)
   data = text_to_tag(data)
 
-  @logger.info "[#{Time.now}] exec: successfully got data. now save them."
+  @logger.info "[#{Time.now.to_s(:db)}] exec: successfully got data. now save them."
   data.map{|datum| Bookmark.create(datum)}
-  @logger.info "[#{Time.now}] Bookmark.count => #{Bookmark.count}"
+  @logger.info "[#{Time.now.to_s(:db)}] Bookmark.count => #{Bookmark.count}"
 end
 
 def total_count(tag)
-  @logger.info "[#{Time.now}] total_count: #{tag}"
+  @logger.info "[#{Time.now.to_s(:db)}] total_count: #{tag}"
   res = request_bookmarks(URI.escape(tag))
   doc = Nokogiri::XML(res.body)
   total = doc.child.search("title").first.text.scan(/\d+/)[-1].to_i
-  @logger.info "[#{Time.now}] total_count: => #{total}"
+  @logger.info "[#{Time.now.to_s(:db)}] total_count: => #{total}"
   total
 end
-

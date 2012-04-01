@@ -1,4 +1,5 @@
-require './hatena.rb'
+require './bot.rb'
+load "./vendor/bundle/ruby/1.9.1/gems/mongoid-2.4.6/lib/mongoid/railties/database.rake"
 
 namespace :hatetw do
   task :fetch do
@@ -10,5 +11,9 @@ namespace :hatetw do
       exec(tag, i)
       sleep 2
     end
+  end
+
+  task :update do
+    update
   end
 end
