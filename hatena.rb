@@ -5,6 +5,7 @@ require 'net/http'
 require 'nokogiri'
 require 'pry'
 
+require 'logger'
 require 'mongoid'
 
 
@@ -12,6 +13,8 @@ require 'mongoid'
 Mongoid.configure do |config|
     config.master = Mongo::Connection.new('localhost', 27017).db("hatetw")
 end
+
+@logger = Logger.new('hatetw.log')
 
 ### lib -----------------------------
 class String
@@ -82,6 +85,8 @@ def extract_data(doc)
     bcnt  = getcount(link)
     tags  = entry.xpath("dc:subject").map(&:children).map(&:inner_text).reject{|tag| tag == "あとで"}
 
+    @logger.info "[#{Time.now}]    got: #{time.to_s} -- #{title}"
+    @logger.info "[#{Time.now}]    got:   #{blink} (#{bcnt})"
 
     entries << {
       title: title,
@@ -102,13 +107,24 @@ def text_to_tag(data)
 end
 
 
-def exec
-  # request_bookmarks("%E3%81%82%E3%81%A8%E3%81%A7")
-  res = request_bookmarks(URI.escape("%E3%81%82%E3%81%A8%E3%81%A7"))
+def exec(tag, page=0)
+  @logger.info "[#{Time.now}] exec: #{tag} - p.#{page}"
+  res = request_bookmarks(URI.escape(tag), page)
   doc = Nokogiri::XML(res.body)
   data = extract_data(doc)
   data = text_to_tag(data)
 
+  @logger.info "[#{Time.now}] exec: successfully got data. now save them."
   data.map{|datum| Bookmark.create(datum)}
+  @logger.info "[#{Time.now}] Bookmark.count => #{Bookmark.count}"
+end
+
+def total_count(tag)
+  @logger.info "[#{Time.now}] total_count: #{tag}"
+  res = request_bookmarks(URI.escape(tag))
+  doc = Nokogiri::XML(res.body)
+  total = doc.child.search("title").first.text.scan(/\d+/)[-1].to_i
+  @logger.info "[#{Time.now}] total_count: => #{total}"
+  total
 end
 

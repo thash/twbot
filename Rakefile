@@ -1,0 +1,14 @@
+require './hatena.rb'
+
+namespace :hatetw do
+  task :fetch do
+    tag = ENV['TAG']
+    total = total_count(tag)
+    divmod = total.divmod(20)
+    pages = divmod[1] == 0 ? divmod[0] : divmod[0] + 1
+    for i in 0..pages do
+      exec(tag, i)
+      sleep 2
+    end
+  end
+end
