@@ -9,6 +9,8 @@ GEM
       multi_json (~> 1.0)
     addressable (2.2.6)
     bson (1.6.1)
+    bson_ext (1.6.1)
+      bson (~> 1.6.1)
     builder (3.0.0)
     coderay (1.0.5)
     domain_name (0.5.2)
@@ -62,6 +64,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bson_ext
   mechanize
   mongoid
   nokogiri

@@ -5,8 +5,49 @@ require 'net/http'
 require 'nokogiri'
 require 'pry'
 
+require 'mongoid'
 
-def atode_entries(tag, page=0)
+
+### config ---------------------------------
+Mongoid.configure do |config|
+    config.master = Mongo::Connection.new('localhost', 27017).db("hatetw")
+end
+
+### lib -----------------------------
+class String
+  def as_a_tag
+    Tag.find_or_create_by(text: self)
+  end
+end
+
+### models ---------------------------------
+class Bookmark
+  include Mongoid::Document
+  include Mongoid::Timestamps
+
+  field :title, type: String
+  field :link, type: String
+  field :blink, type: String
+  field :time, type: DateTime
+  field :bcnt, type: Integer
+
+  has_and_belongs_to_many :tags
+
+  validates_presence_of :title, :link
+  validates_uniqueness_of :blink
+end
+
+class Tag
+  include Mongoid::Document
+
+  field :text, type: String
+
+  has_and_belongs_to_many :bookmarks
+end
+
+
+### Controller ---------------------------------
+def request_bookmarks(tag, page=0)
   uri  = URI.parse("http://b.hatena.ne.jp/Hash/atomfeed?of=#{page*20}&tag=#{tag}")
   http = Net::HTTP.new(uri.host, uri.port)
   req  = Net::HTTP::Get.new(uri.request_uri)
@@ -22,27 +63,52 @@ def getcount(url)
   res.body.to_i
 end
 
-res = atode_entries("%E3%81%82%E3%81%A8%E3%81%A7")
-doc = Nokogiri::XML(res.body)
 
-total_count = doc.child.children[1].child.inner_text.scan(/\(\d+\)/).last.gsub(/[()]/,"").to_i
+def extract_data(doc)
+  entries = []
+  doc.child.children.search("entry").each do |entry|
 
-doc.child.children.search("entry").each do |entry|
+    # title => "twitter bootstrap railsを使ったら職が見つかり彼女も出来て - ppworks blog"
+    # link => "http://ppworks.hatenablog.jp/entry/2012/02/19/033644"
+    # blink => "http://b.hatena.ne.jp/Hash/20120307#bookmark-81508937"
+    # time => "2012-03-07 03:11:35"
+    # bcnt => 49
+    # tags => ["rails", "design"]
 
-  # title => "twitter bootstrap railsを使ったら職が見つかり彼女も出来て - ppworks blog"
-  # link => "http://ppworks.hatenablog.jp/entry/2012/02/19/033644"
-  # blink => "http://b.hatena.ne.jp/Hash/20120307#bookmark-81508937"
-  # time => "2012-03-07 03:11:35"
-  # tags => ["rails", "design"]
-  # bcnt => 49
+    title = entry.search("title").inner_text
+    link  = entry.search("link")[0].attributes["href"].value
+    blink = entry.search("link")[1].attributes["href"].value
+    time  = DateTime.parse(entry.search("issued").inner_text).strftime("%Y-%m-%d %X")
+    bcnt  = getcount(link)
+    tags  = entry.xpath("dc:subject").map(&:children).map(&:inner_text).reject{|tag| tag == "あとで"}
 
-  title = entry.search("title").inner_text
-  link  = entry.search("link")[0].attributes["href"].value
-  blink = entry.search("link")[1].attributes["href"].value
-  time  = DateTime.parse(entry.search("issued").inner_text).strftime("%Y-%m-%d %X")
-  tags  = entry.xpath("dc:subject").map(&:children).map(&:inner_text).reject{|tag| tag == "あとで"}
-  bcnt  = getcount(link)
+
+    entries << {
+      title: title,
+      link: link,
+      blink: blink,
+      time: time,
+      bcnt: bcnt,
+      tags: tags # here, it's just texts. need to create Tag object.
+    }
+  end
+  entries
+end
+
+def text_to_tag(data)
+  data.each do |datum|
+    datum[:tags].map!(&:as_a_tag)
+  end
 end
 
 
+def exec
+  # request_bookmarks("%E3%81%82%E3%81%A8%E3%81%A7")
+  res = request_bookmarks(URI.escape("%E3%81%82%E3%81%A8%E3%81%A7"))
+  doc = Nokogiri::XML(res.body)
+  data = extract_data(doc)
+  data = text_to_tag(data)
+
+  data.map{|datum| Bookmark.create(datum)}
+end
 
