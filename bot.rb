@@ -27,7 +27,7 @@ end
 
 def make_tweet(b, user="T_Hash")
   txt = ""
-  txt += "@#{user}"
+  txt += "@#{user} "
   txt += b.time.to_date.to_s
   txt += " に"
   txt += b.tags.map(&:text).join(",")
