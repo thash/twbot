@@ -34,6 +34,7 @@ def make_tweet(b, user="T_Hash")
   txt += "タグでブクマされた "
   txt += "『" + truncate(b.title, 30) + "』 "
   txt += b.link
+  txt += " "
   txt += random_gobi
 end
 
