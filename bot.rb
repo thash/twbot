@@ -7,7 +7,7 @@ require 'twitter'
 
 require './hatena.rb'
 
-@botlogger = Logger.new('bot.log')
+@botlogger = Logger.new('logbot.log')
 
 SETTINGS = YAML.load_file('settings.yml')
 y = YAML.load_file('secret.yml')
@@ -51,15 +51,31 @@ def truncate(txt, limit=30)
 end
 
 def update
+  b = get_first(0)
   begin
-    b = get_first(0)
     txt = make_tweet(b)
-    Twitter.update(txt)
-    b.inc(:remind_cnt, 1)
-    b.save
+    status = Twitter.update(txt)
   rescue => e
     @botlogger.error "[#{Time.now.to_s(:db)}] Twitter bot update failed."
     @botlogger.error e.message
     @botlogger.error e.backtrace.join("\n")
   end
+  begin
+    save_post(status)
+    b.inc(:remind_cnt, 1)
+    b.save
+  rescue => e
+    @botlogger.error "[#{Time.now.to_s(:db)}] Error occurred while saving information."
+    @botlogger.error e.message
+    @botlogger.error e.backtrace.join("\n")
+  end
+end
+
+def save_post(status)
+  BotPost.create({
+    status_id: status.id,
+    to_user: status.in_reply_to_user_id,
+    in_reply_to: status.in_reply_to_status_id,
+    text: status.text,
+    posted_at: status.created_at})
 end

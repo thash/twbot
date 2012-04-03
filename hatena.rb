@@ -14,7 +14,7 @@ Mongoid.configure do |config|
     config.master = Mongo::Connection.new('localhost', 27017).db("hatetw")
 end
 
-@logger = Logger.new('hatetw.log')
+@logger = Logger.new('loghatetw.log')
 
 ### lib -----------------------------
 class String
@@ -53,6 +53,31 @@ class Tag
   validates_uniqueness_of :text
 
   index :text, :background => true
+end
+
+class BotPost
+  include Mongoid::Document
+  include Mongoid::Timestamps
+
+  field :status_id,   type: Integer
+  field :to_user,   type: Integer # twitter user_id
+  field :in_reply_to, type: Integer
+  field :text,        type: String
+  field :posted_at,   type: Time
+
+  validates_uniqueness_of :status_id
+end
+
+class Mention
+  include Mongoid::Document
+
+  field :status_id,   type: Integer
+  field :from_user,   type: String
+  field :in_reply_to, type: Integer
+  field :text,        type: String
+  field :posted_at,   type: Time
+
+  validates_uniqueness_of :status_id
 end
 
 
