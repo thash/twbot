@@ -3,6 +3,8 @@
 require "rubygems"
 require "bundler/setup"
 require 'yaml'
+require 'httpclient'
+require 'hashie'
 require 'twitter'
 
 require './hatena.rb'
@@ -11,6 +13,7 @@ require './hatena.rb'
 
 SETTINGS = YAML.load_file('settings.yml')
 y = YAML.load_file('secret.yml')
+@secret = Hashie::Mash.new(y)
 
 Twitter.configure do |c|
   c.consumer_key =       y["CONSUMER_KEY"]
@@ -33,7 +36,7 @@ def make_tweet(b, user="T_Hash")
   txt += b.tags.map(&:text).join(",")
   txt += "タグでブクマされた "
   txt += "『" + truncate(b.title, 30) + "』 "
-  txt += b.link
+  txt += shorten(b.link)
   txt += " "
   txt += random_gobi
 end
@@ -78,4 +81,24 @@ def save_post(status)
     in_reply_to: status.in_reply_to_status_id,
     text: status.text,
     posted_at: status.created_at})
+end
+
+# shorten returns short url.
+# full result looks something like this. {{{
+# => {"status_code"=>200,
+#  "status_txt"=>"OK",
+#  "data"=>
+#   {"long_url"=>
+#     "http://m.igrs.jp/blog/2012/03/12/why-rubyists-should-try-elixir/",
+#    "url"=>"http://bit.ly/I1R2ev",
+#    "hash"=>"I1R2ev",
+#    "global_hash"=>"yLG6Hd",
+#    "new_hash"=>1}}
+# }}}
+def shorten(url)
+  return nil if url.blank?
+  hc = HTTPClient.new
+  fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{url}&login=#{@secret.bitly.login}&apikey=#{@secret.bitly.apikey}"
+  res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
+  res.data.url
 end

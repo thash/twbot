@@ -7,3 +7,5 @@ gem "mechanize"
 gem "mongoid"
 gem "bson_ext"
 gem 'activesupport'
+gem 'httpclient'
+gem 'hashie'
