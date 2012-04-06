@@ -72,7 +72,7 @@ end
 
 def fetch_mentions
   latest = Mention.order_by(:posted_at, :desc).first.try(:posted_at) || Time.parse("2012-04-01")
-  mentions = Twitter.mentions.select{|m| m.created_at >= latest }
+  mentions = Twitter.mentions.select{|m| m.created_at > latest }
   unless mentions.blank?
     mentions.each do |mention|
       Mention.store(mention)
@@ -82,9 +82,15 @@ def fetch_mentions
 end
 
 def react_to_mentions(limit=3)
-  mentions = Mention.where(processed: false).limit(limit)
+  mentions = Mention.where(processed: false).limit(limit).to_a
   for mention in mentions do
-    post = BotPost.find_by_status_id(mention.in_reply_to_status_id)
+    post = BotPost.where(status_id: mention.in_reply_to).first
+    # 宛先tweetがBotPostに登録されてないとき。直叩き更新、[fix: エラー報告]など
+    # 工夫できるところだがとりあえずskip.
+    if post.blank?
+      mention.update_attributes(processed: true)
+      next
+    end
     case mention.type
     when :read
       post.bookmark.update_attributes(closed: true)

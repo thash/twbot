@@ -27,6 +27,7 @@ class BotPost
     $botlogger.error e.backtrace.join("\n")
   end
 
+# not needed
   def self.find_by_status_id(status_id)
     BotPost.where(status_id: status_id).first || raise(Mongoid::Errors::DocumentNotFound.new(self.class, status_id.to_s))
   end
