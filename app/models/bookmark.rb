@@ -28,7 +28,7 @@ class Bookmark
     txt += "@#{options[:user]} "
     txt += self.time.to_date.to_s
     txt += " に"
-    txt += options[:short_level] == 0 ? tagmapper(b, 5) : tagmapper(b, 1)
+    txt += options[:short_level] == 0 ? tagmapper(5) : tagmapper(1)
     txt += "タグでブクマされた "
     txt += "『" + truncate(self.title, 30) + "』 "
     txt += shorten(self.link)
@@ -51,4 +51,5 @@ class Bookmark
       txt[0..30] + "..."
     end
   end
+
 end

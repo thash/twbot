@@ -18,15 +18,16 @@ def update
   b = Bookmark.get_first(0)
   txt = b.make_tweet(user: "T_Hash", short_level: 0)
   status = Twitter.update(txt)
-  BotPost.store(status)
   b.inc(:remind_cnt, 1)
-  b.save
+  BotPost.store(status)
 rescue Twitter::Error::Forbidden => e
   $botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
   $botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
-  txt = make_tweet(b, user: "T_Hash", short_level: 1)
+  txt = b.make_tweet(user: "T_Hash", short_level: 1)
   begin
     status = Twitter.update(txt)
+    b.inc(:remind_cnt, 1)
+    BotPost.store(status)
   rescue Twitter::Error::Forbidden => e
     $botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
     $botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
@@ -38,6 +39,7 @@ rescue => e
   $botlogger.error e.backtrace.join("\n")
   Twitter.update(error_mention(e))
 end
+
 
 # shorten returns short url.
 # full result looks something like this. {{{
@@ -54,7 +56,7 @@ end
 def shorten(url)
   return nil if url.blank?
   hc = HTTPClient.new
-  fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{url}&login=#{@secret.bitly.login}&apikey=#{@secret.bitly.apikey}"
+  fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{url}&login=#{$secret.bitly.login}&apikey=#{$secret.bitly.apikey}"
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
   res.data.url
 rescue => e
