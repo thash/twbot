@@ -89,22 +89,29 @@ def react_to_mentions(limit=3)
     # 工夫できるところだがとりあえずskip.
     if post.blank?
       mention.update_attributes(processed: true)
+      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... could not find BotPost related to the mention. skip it."
       next
     end
     case mention.type
     when :read
       post.bookmark.update_attributes(closed: true)
       mention.update_attributes(processed: true)
-      # TODO: how to specify in_reply_to status_id when reply to users?
+      # TODO: how to set/specify in_reply_to status_id when reply to users?
       status = Twitter.update "@#{mention.from_user} 処理しといた > 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}"
+      $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
     when :dead_link
       mention.update_attributes(processed: true)
       status = Twitter.update "@#{mention.from_user} mjd んじゃなしで"
+      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... closed the bookmark with dead link."
     when :thanks
       status = Twitter.update "@#{mention.from_user} いいってことよ"
+      mention.update_attributes(processed: true)
+      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... thanks :-)"
     when :unknown
+      mention.update_attributes(processed: true)
+      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... unknown mention type. now just skip it."
     end
-    BotPost.store(status)
+    BotPost.store(status) if status.present?
   end
 rescue => e
   error_log_with_trace($botlogger, e, "error while reacting to mentions.")

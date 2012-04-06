@@ -13,6 +13,7 @@ class BotPost
 
   validates_uniqueness_of :status_id
 
+  # TODO: store status which already posted, but failed to store before.
   def self.store(status, bookmark=nil)
     BotPost.create({
       status_id: status.id,
