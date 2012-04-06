@@ -11,7 +11,7 @@ require './hatena.rb'
 
 @botlogger = Logger.new('logbot.log')
 
-SETTINGS = YAML.load_file('settings.yml')
+@settings = Hashie::Mash.new(YAML.load_file('settings.yml'))
 y = YAML.load_file('secret.yml')
 @secret = Hashie::Mash.new(y)
 
@@ -46,7 +46,7 @@ def tagmapper(b, count=5)
 end
 
 def random_gobi(short_level=0)
-  short_level == 0 ?  SETTINGS["mention_gobis"].sample(1).first : "な。"
+  short_level == 0 ?  @settings.mention_gobis.sample(1).first : "な。"
 end
 
 def truncate(txt, limit=30)
@@ -121,4 +121,19 @@ end
 
 def error_mention(e)
   "@T_Hash なんか #{e.class} とかでエラった＞＜"
+end
+
+def fetch_mentions # => Mention.fetch
+  latest = Mention.order_by(:posted_at, :desc).first.try(:posted_at) || Time.parse("2012-04-01")
+  Twitter.mentions.select{|m| m.created_at >= latest }
+end
+
+def save_mention(m)
+  Mention.create!({
+      status_id: m.id,
+      from_user: m.user.screen_name,
+      in_reply_to: m.in_reply_to_status_id,
+      text: m.text,
+      posted_at: m.created_at
+  })
 end
