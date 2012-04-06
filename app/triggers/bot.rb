@@ -96,15 +96,17 @@ def react_to_mentions(limit=3)
     when :read
       post.bookmark.update_attributes(closed: true)
       mention.update_attributes(processed: true)
-      # TODO: how to set/specify in_reply_to status_id when reply to users?
-      status = Twitter.update "@#{mention.from_user} 処理しといた > 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}"
+      status = Twitter.update("@#{mention.from_user} 処理しといた > 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}",
+                              in_reply_to_status_id: mention.status_id)
       $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
     when :dead_link
       mention.update_attributes(processed: true)
-      status = Twitter.update "@#{mention.from_user} mjd んじゃなしで"
+      status = Twitter.update("@#{mention.from_user} mjd んじゃなしで",
+                              in_reply_to_status_id: mention.status_id)
       $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... closed the bookmark with dead link."
     when :thanks
-      status = Twitter.update "@#{mention.from_user} いいってことよ"
+      status = Twitter.update("@#{mention.from_user} いいってことよ",
+                              in_reply_to_status_id: mention.status_id)
       mention.update_attributes(processed: true)
       $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... thanks :-)"
     when :unknown
