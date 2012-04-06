@@ -91,12 +91,15 @@ def react_to_mentions(limit=3)
       mention.update_attributes(processed: true)
       $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... could not find BotPost related to the mention. skip it."
       next
+    elsif post.bookmark.present? && post.bookmark.closed == true
+      status = Twitter.update("@#{mention.from_user} おじいさんそれにはもうリプライしたでしょ",
+                              in_reply_to_status_id: mention.status_id)
     end
     case mention.type
     when :read
       post.bookmark.update_attributes(closed: true)
       mention.update_attributes(processed: true)
-      status = Twitter.update("@#{mention.from_user} 処理しといた > 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}",
+      status = Twitter.update("@#{mention.from_user} #{$settings.read_replies.sample(1).first} -- 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}",
                               in_reply_to_status_id: mention.status_id)
       $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
     when :dead_link
@@ -108,7 +111,10 @@ def react_to_mentions(limit=3)
       status = Twitter.update("@#{mention.from_user} いいってことよ",
                               in_reply_to_status_id: mention.status_id)
       mention.update_attributes(processed: true)
-      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... thanks :-)"
+    when :sorry
+      status = Twitter.update("@#{mention.from_user} 気にすんな",
+                              in_reply_to_status_id: mention.status_id)
+      mention.update_attributes(processed: true)
     when :unknown
       mention.update_attributes(processed: true)
       $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... unknown mention type. now just skip it."

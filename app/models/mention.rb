@@ -33,6 +33,8 @@ class Mention
       :dead_link
     when /(thx)|(さんくす)|(サンクス)|(ありがと)/
       :thanks
+    when /(ごめん)|(すまん)|(すみません)|(申し訳ない)/
+      :sorry
     else
       # TODO: add the case when in_reply_to_status_id.blank?
       :unknown
