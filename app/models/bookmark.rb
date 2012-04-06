@@ -12,6 +12,7 @@ class Bookmark
   field :closed,     type: Boolean, default: false
 
   has_and_belongs_to_many :tags
+  has_many :botposts
 
   validates_presence_of :title, :link, :blink
   validates_uniqueness_of :blink
@@ -19,6 +20,7 @@ class Bookmark
   index [:time, Mongo::DESCENDING], :background => true
 
   def self.get_first(num)
+    #TODO: refactoring it.
     b = Bookmark.where(closed: false, :remind_cnt.lte => num).order_by(:time, 'asc').first if b.blank?
     return b.present? ? b : nil
   end
@@ -30,7 +32,7 @@ class Bookmark
     txt += " に"
     txt += options[:short_level] == 0 ? tagmapper(5) : tagmapper(1)
     txt += "タグでブクマされた "
-    txt += "『" + truncate(self.title, 30) + "』 "
+    txt += "『" + trunc_title + "』 "
     txt += shorten(self.link)
     txt += " "
     txt += random_gobi
@@ -44,11 +46,11 @@ class Bookmark
     short_level == 0 ?  $settings.mention_gobis.sample(1).first : "な。"
   end
 
-  def truncate(txt, limit=30)
-    if txt.length <= limit
-      txt
+  def trunc_title(limit=30)
+    if title.length <= limit
+      title
     else
-      txt[0..30] + "..."
+      title[0..limit] + "..."
     end
   end
 

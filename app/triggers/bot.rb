@@ -19,25 +19,21 @@ def update
   txt = b.make_tweet(user: "T_Hash", short_level: 0)
   status = Twitter.update(txt)
   b.inc(:remind_cnt, 1)
-  BotPost.store(status)
+  BotPost.store(status, b)
 rescue Twitter::Error::Forbidden => e
-  $botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
-  $botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
+  error_log_with_trace($botlogger, e, "Long tweet! length: #{txt.length}. Trying to shorten tweet: #{txt}")
   txt = b.make_tweet(user: "T_Hash", short_level: 1)
   begin
     status = Twitter.update(txt)
     b.inc(:remind_cnt, 1)
-    BotPost.store(status)
+    BotPost.store(status, b)
   rescue Twitter::Error::Forbidden => e
-    $botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
-    $botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
-    Twitter.update(error_mention(e))
+    error_log_with_trace($botlogger, e, "Long tweet! length: #{txt.length}. Trying to shorten tweet: #{txt}")
+    error_mention(e)
   end
 rescue => e
-  $botlogger.error "[#{Time.now.to_s(:db)}] Twitter bot update failed."
-  $botlogger.error e.message
-  $botlogger.error e.backtrace.join("\n")
-  Twitter.update(error_mention(e))
+  error_log_with_trace($botlogger, e, "Twitter bot update failed.")
+  error_mention(e)
 end
 
 
@@ -60,13 +56,18 @@ def shorten(url)
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
   res.data.url
 rescue => e
-  $botlogger.error "[#{Time.now.to_s(:db)}] bit.ly API failed."
-  $botlogger.error e.message
-  $botlogger.error e.backtrace.join("\n")
+  error_log_with_trace($botlogger, e, "bit.ly API failed.")
+  error_mention(e)
+end
+
+def error_log_with_trace(logger, e, memo)
+  logger.error "[#{Time.now.to_s(:db)}] #{memo}"
+  logger.error e.message
+  logger.error e.backtrace.join("\n")
 end
 
 def error_mention(e)
-  "@T_Hash なんか #{e.class} とかでエラった＞＜"
+  Twitter.update "@T_Hash なんか #{e.class} とかでエラった＞＜"
 end
 
 def fetch_mentions
@@ -75,9 +76,31 @@ def fetch_mentions
   unless mentions.blank?
     mentions.each do |mention|
       Mention.store(mention)
+      $botlogger.info "[#{Time.now.to_s(:db)}] mention (#{mention.id} in reply to #{mention.in_reply_to_status_id}) stored."
     end
   end
 end
 
-def reply
+def react_to_mentions(limit=3)
+  mentions = Mention.where(processed: false).limit(limit)
+  for mention in mentions do
+    post = BotPost.find_by_status_id(mention.in_reply_to_status_id)
+    case mention.type
+    when :read
+      post.bookmark.update_attributes(closed: true)
+      mention.update_attributes(processed: true)
+      # TODO: how to specify in_reply_to status_id when reply to users?
+      status = Twitter.update "@#{mention.from_user} 処理しといた > 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}"
+    when :dead_link
+      mention.update_attributes(processed: true)
+      status = Twitter.update "@#{mention.from_user} mjd んじゃなしで"
+    when :thanks
+      status = Twitter.update "@#{mention.from_user} いいってことよ"
+    when :unknown
+    end
+    BotPost.store(status)
+  end
+rescue => e
+  error_log_with_trace($botlogger, e, "error while reacting to mentions.")
+  #error_mention(e)
 end
