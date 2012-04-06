@@ -28,12 +28,12 @@ def get_first(num)
   return b.present? ? b : nil
 end
 
-def make_tweet(b, user="T_Hash")
+def make_tweet(b, options={user: "T_Hash", short_level: 0})
   txt = ""
-  txt += "@#{user} "
+  txt += "@#{options[:user]} "
   txt += b.time.to_date.to_s
   txt += " に"
-  txt += b.tags.map(&:text).join(",")
+  txt += short_level == 0 ? tagmapper(b, 5) : tagmapper(b, 1)
   txt += "タグでブクマされた "
   txt += "『" + truncate(b.title, 30) + "』 "
   txt += shorten(b.link)
@@ -41,8 +41,12 @@ def make_tweet(b, user="T_Hash")
   txt += random_gobi
 end
 
-def random_gobi
-  SETTINGS["mention_gobis"].sample(1).first
+def tagmapper(b, count=5)
+  b.tags[0...count].map(&:text).join(",")
+end
+
+def random_gobi(short_level=0)
+  short_level == 0 ?  SETTINGS["mention_gobis"].sample(1).first : "な。"
 end
 
 def truncate(txt, limit=30)
@@ -55,23 +59,27 @@ end
 
 def update
   b = get_first(0)
+  txt = make_tweet(b, user: "T_Hash", short_level: 0)
+  status = Twitter.update(txt)
+  save_post(status)
+  b.inc(:remind_cnt, 1)
+  b.save
+rescue Twitter::Error::Forbidden => e
+  @botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
+  @botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
+  txt = make_tweet(b, user: "T_Hash", short_level: 1)
   begin
-    txt = make_tweet(b)
     status = Twitter.update(txt)
-  rescue => e
-    @botlogger.error "[#{Time.now.to_s(:db)}] Twitter bot update failed."
-    @botlogger.error e.message
-    @botlogger.error e.backtrace.join("\n")
+  rescue Twitter::Error::Forbidden => e
+    @botlogger.error  "[#{Time.now.to_s(:db)}] Long tweet! length: #{txt.length}."
+    @botlogger.error  "[#{Time.now.to_s(:db)}] try to shorten tweet: #{txt}"
+    Twitter.update(error_mention(e))
   end
-  begin
-    save_post(status)
-    b.inc(:remind_cnt, 1)
-    b.save
-  rescue => e
-    @botlogger.error "[#{Time.now.to_s(:db)}] Error occurred while saving information."
-    @botlogger.error e.message
-    @botlogger.error e.backtrace.join("\n")
-  end
+rescue => e
+  @botlogger.error "[#{Time.now.to_s(:db)}] Twitter bot update failed."
+  @botlogger.error e.message
+  @botlogger.error e.backtrace.join("\n")
+  Twitter.update(error_mention(e))
 end
 
 def save_post(status)
@@ -81,6 +89,10 @@ def save_post(status)
     in_reply_to: status.in_reply_to_status_id,
     text: status.text,
     posted_at: status.created_at})
+rescue => e
+    @botlogger.error "[#{Time.now.to_s(:db)}] Save to BotPost failed."
+    @botlogger.error e.message
+    @botlogger.error e.backtrace.join("\n")
 end
 
 # shorten returns short url.
@@ -101,4 +113,12 @@ def shorten(url)
   fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{url}&login=#{@secret.bitly.login}&apikey=#{@secret.bitly.apikey}"
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
   res.data.url
+rescue => e
+  @botlogger.error "[#{Time.now.to_s(:db)}] bit.ly API failed."
+  @botlogger.error e.message
+  @botlogger.error e.backtrace.join("\n")
+end
+
+def error_mention(e)
+  "@T_Hash なんか #{e.class} とかでエラった＞＜"
 end
