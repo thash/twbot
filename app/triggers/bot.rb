@@ -117,5 +117,5 @@ def react_to_mentions(limit=3)
   end
 rescue => e
   error_log_with_trace($botlogger, e, "error while reacting to mentions.")
-  #error_mention(e)
+  error_mention(e)
 end
