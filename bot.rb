@@ -33,7 +33,7 @@ def make_tweet(b, options={user: "T_Hash", short_level: 0})
   txt += "@#{options[:user]} "
   txt += b.time.to_date.to_s
   txt += " に"
-  txt += short_level == 0 ? tagmapper(b, 5) : tagmapper(b, 1)
+  txt += options[:short_level] == 0 ? tagmapper(b, 5) : tagmapper(b, 1)
   txt += "タグでブクマされた "
   txt += "『" + truncate(b.title, 30) + "』 "
   txt += shorten(b.link)
