@@ -19,4 +19,9 @@ namespace :hatetw do
   task :update do
     update
   end
+
+  task :reply do
+    fetch_mentions
+    react_to_mentions(3)
+  end
 end
