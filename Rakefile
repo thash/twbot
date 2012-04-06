@@ -1,4 +1,7 @@
-require './bot.rb'
+Dir::foreach(File.expand_path('../app/triggers/', __FILE__)) { |f|
+  next if f == "." || f == ".."
+  require  File.expand_path("../app/triggers/#{f}", __FILE__)
+}
 load "./vendor/bundle/ruby/1.9.1/gems/mongoid-2.4.6/lib/mongoid/railties/database.rake"
 
 namespace :hatetw do
