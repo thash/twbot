@@ -1,3 +1,7 @@
+mongoid:
+  host: localhost
+  port: 27017
+  db: hatetw
 mention_gobis:
   - というものがあってだな...
   - はもう読んだよな？

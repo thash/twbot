@@ -10,13 +10,12 @@ require 'logger'
 require 'mongoid'
 
 ### config ---------------------------------
-@yml = Hashie::Mash.new(YAML.load_file('./mongoid.yml'))
+$settings  = Hashie::Mash.new(YAML.load_file('./settings.yml'))
+$secret    = Hashie::Mash.new(YAML.load_file('./secret.yml'))
+
 Mongoid.configure do |config|
-    config.master = Mongo::Connection.new(@yml.host, @yml.port).db(@yml.db)
+    config.master = Mongo::Connection.new($settings.mongoid.host, $settings.mongoid.port).db($settings.mongoid.db)
 end
 
 $logger    = Logger.new('log/hatetw.log')
 $botlogger = Logger.new('log/bot.log')
-$settings  = Hashie::Mash.new(YAML.load_file('./settings.yml'))
-$secret    = Hashie::Mash.new(YAML.load_file('./secret.yml'))
-
