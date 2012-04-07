@@ -56,7 +56,7 @@ def shorten(url)
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
   res.data.url
 rescue => e
-  error_log_with_trace($botlogger, e, "bit.ly API failed.")
+  error_log_with_trace($botlogger, e, "bit.ly API failed while shortening url: #{url}.")
   error_mention(e)
 end
 
