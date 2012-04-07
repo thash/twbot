@@ -12,7 +12,7 @@ class Bookmark
   field :closed,     type: Boolean, default: false
 
   has_and_belongs_to_many :tags
-  has_many :botposts
+  has_many :botposts, class_name: 'BotPost'
 
   validates_presence_of :title, :link, :blink
   validates_uniqueness_of :blink
