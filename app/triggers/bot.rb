@@ -54,6 +54,10 @@ def shorten(url)
   hc = HTTPClient.new
   fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{CGI.escape(url)}&login=#{$secret.bitly.login}&apikey=#{$secret.bitly.apikey}"
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
+  if res.status_code != 200
+    $botlogger.info "[#{Time.now.to_s(:db)}] bit.ly API error. url: #{url}, response: #{res.to_s}")
+    return
+  end
   res.data.url
 rescue => e
   error_log_with_trace($botlogger, e, "bit.ly API failed while shortening url: #{url}.")
