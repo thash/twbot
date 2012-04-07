@@ -22,6 +22,6 @@ namespace :hatetw do
 
   task :reply do
     fetch_mentions
-    react_to_mentions(3)
+    react_to_mentions(1)
   end
 end
