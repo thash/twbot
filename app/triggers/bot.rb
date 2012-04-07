@@ -52,7 +52,7 @@ end
 def shorten(url)
   return nil if url.blank?
   hc = HTTPClient.new
-  fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{url}&login=#{$secret.bitly.login}&apikey=#{$secret.bitly.apikey}"
+  fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{CGI.escape(url)}&login=#{$secret.bitly.login}&apikey=#{$secret.bitly.apikey}"
   res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
   res.data.url
 rescue => e
