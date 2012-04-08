@@ -33,7 +33,7 @@ class Bookmark
     txt += options[:short_level] == 0 ? tagmapper(5) : tagmapper(1)
     txt += "タグでブクマされた "
     txt += "『" + trunc_title + "』 "
-    txt += shorten(self.link)
+    txt += (shorten(self.link) || link)
     txt += " "
     txt += random_gobi
   end
