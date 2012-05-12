@@ -27,8 +27,10 @@ class Mention
 
   def type
     case text
-    when /(読んだ)|(よんだ)|(完了)/
+    when /(読んだ)|(よんだ)|(完了)|(close)/
       :read
+    when /(うどん)/
+      :udon
     when /(リンク切れ)/
       :dead_link
     when /(thx)|(さんくす)|(サンクス)|(ありがと)/
