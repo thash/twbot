@@ -89,47 +89,50 @@ def react_to_mentions(limit=3)
   mentions = Mention.where(processed: false).limit(limit).to_a
   for mention in mentions do
     post = BotPost.where(status_id: mention.in_reply_to).first
-    # 宛先tweetがBotPostに登録されてないとき。直叩き更新、[fix: エラー報告]など
-    # 工夫できるところだがとりあえずskip.
-    if post.blank?
-      mention.update_attributes(processed: true)
-      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... could not find BotPost related to the mention. skip it."
-      next
-    elsif post.bookmark.present? && post.bookmark.closed == true
-      status = Twitter.update("@#{mention.from_user} おじいさんそれにはもうリプライしたでしょ",
-                              in_reply_to_status_id: mention.status_id)
+
+#   宛先tweetがBotPostに登録されてないとき。直叩き更新、[fix: エラー報告]など
+#    if post.blank?
+#      mention.update_attributes(processed: true)
+#      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... could not find BotPost related to the mention. skip it."
+#      next
+#    elsif post.bookmark.present? && post.bookmark.closed == true
+
+    unless mention.type == :unknown
+      status = Twitter.update(reaction_text(mention), in_reply_to_status_id: mention.status_id)
+      BotPost.store(status) if status.present?
+      side_effect(mention)
     end
-    case mention.type
-    when :read
-      post.bookmark.update_attributes(closed: true)
-      mention.update_attributes(processed: true)
-      status = Twitter.update("@#{mention.from_user} #{$settings.read_replies.sample(1).first} -- 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}",
-                              in_reply_to_status_id: mention.status_id)
-      $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
-    when :udon
-      mention.update_attributes(processed: true)
-      status = Twitter.update("@#{mention.from_user} #{$settings.udon_replies.sample(1).first}",
-                              in_reply_to_status_id: mention.status_id)
-    when :dead_link
-      mention.update_attributes(processed: true)
-      status = Twitter.update("@#{mention.from_user} mjd んじゃなしで",
-                              in_reply_to_status_id: mention.status_id)
-      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... closed the bookmark with dead link."
-    when :thanks
-      status = Twitter.update("@#{mention.from_user} いいってことよ",
-                              in_reply_to_status_id: mention.status_id)
-      mention.update_attributes(processed: true)
-    when :sorry
-      status = Twitter.update("@#{mention.from_user} 気にすんな",
-                              in_reply_to_status_id: mention.status_id)
-      mention.update_attributes(processed: true)
-    when :unknown
-      mention.update_attributes(processed: true)
-      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... unknown mention type. now just skip it."
-    end
-    BotPost.store(status) if status.present?
   end
 rescue => e
   error_log_with_trace($botlogger, e, "error while reacting to mentions.")
   error_mention(e)
+end
+
+def reaction_text(mention)
+  "@#{mention.from_user} " + 
+    case mention.type
+    when :read
+      "#{$settings.read_replies.sample(1).first} -- 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}"
+    when :udon
+      "#{$settings.udon_replies.sample(1).first}"
+    when :dead_link
+      "んじゃなしで"
+    when :thanks
+      "いいってことよ"
+    when :sorry
+      "気にすんな"
+    end
+end
+
+def side_effect(mention)
+  case mention.type
+  when :read
+    post.bookmark.update_attributes(closed: true)
+    $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
+  when :dead_link
+    $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... closed the bookmark with dead link."
+  when :unknown
+    $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... unknown mention type. now just skip it."
+  end
+  mention.update_attributes(processed: true)
 end
