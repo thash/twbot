@@ -98,9 +98,9 @@ def react_to_mentions(limit=3)
 #    elsif post.bookmark.present? && post.bookmark.closed == true
 
     unless mention.type == :unknown
-      status = Twitter.update(reaction_text(mention), in_reply_to_status_id: mention.status_id)
+      status = Twitter.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
       BotPost.store(status) if status.present?
-      side_effect(mention)
+      side_effect(mention, post)
     end
   end
 rescue => e
@@ -108,7 +108,7 @@ rescue => e
   error_mention(e)
 end
 
-def reaction_text(mention)
+def reaction_text(mention, post=nil)
   "@#{mention.from_user} " + 
     case mention.type
     when :read
@@ -124,7 +124,7 @@ def reaction_text(mention)
     end
 end
 
-def side_effect(mention)
+def side_effect(mention, post=nil)
   case mention.type
   when :read
     post.bookmark.update_attributes(closed: true)
