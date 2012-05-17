@@ -13,13 +13,13 @@ describe 'Bookmark' do
       bcnt: 49
     }}
 
-    it 'should remove @ when tag is @someone' do     
+    it 'should generate string from tags' do     
       params = base_params.merge( tags: ["hoge".as_a_tag, "fuga".as_a_tag] )
       Bookmark.create(params)
       b = Bookmark.first
       b.tagmapper.should eq "hoge,fuga"
     end
-    it 'should remove @ when tag is @someone' do     
+    it 'should remove @ when tag contains @someone' do     
       params = base_params.merge( tags: ["hoge".as_a_tag, "@ppworks".as_a_tag] )
       Bookmark.create(params)
       b = Bookmark.first

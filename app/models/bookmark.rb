@@ -39,7 +39,7 @@ class Bookmark
   end
 
   def tagmapper(count=5)
-    tags[0...count].map(&:text).join(",")
+    tags[0...count].map(&:text).map{|t| t.gsub(/^@/,"")}.join(",")
   end
 
   def random_gobi(short_level=0)
