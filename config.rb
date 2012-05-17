@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 require "rubygems"
 require "bundler/setup"
-require 'net/http'
-require 'nokogiri'
-require 'hashie'
-require 'pry'
-require 'yaml'
-require 'logger'
-require 'mongoid'
+Bundler.require # require all the bundled libs at once.
 
 ### config ---------------------------------
 $settings  = Hashie::Mash.new(YAML.load_file('./settings.yml'))

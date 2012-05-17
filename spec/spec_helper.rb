@@ -2,8 +2,6 @@
 
 ENV["HATETW_ENV"] ||= "test"
 require File.expand_path("../../config.rb", __FILE__)
-require 'rspec'
-require 'database_cleaner'
 Dir[File.join(File.dirname(__FILE__), "..", "app", "**/*.rb")].each{|f| require f }
 
 RSpec.configure do |conf|

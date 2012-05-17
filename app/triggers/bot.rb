@@ -4,8 +4,6 @@ Dir::foreach(File.expand_path('../../models/', __FILE__)) { |f|
   next if f == "." || f == ".."
   require  File.expand_path("../../models/#{f}", __FILE__)
 }
-require 'httpclient'
-require 'twitter'
 
 Twitter.configure do |c|
   c.consumer_key =       $secret["CONSUMER_KEY"]
