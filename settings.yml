@@ -2,6 +2,11 @@ mongoid:
   host: localhost
   port: 27017
   db: hatetw
+mongoid_test:
+  host: localhost
+  port: 27017
+  db: hatetw_test
+
 mention_gobis:
   - ...反応無いと寂しいんだが
   - というものがあってだな...

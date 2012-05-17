@@ -13,6 +13,8 @@ GEM
       bson (~> 1.6.1)
     builder (3.0.0)
     coderay (1.0.5)
+    database_cleaner (0.7.2)
+    diff-lcs (1.1.3)
     domain_name (0.5.2)
       unf (~> 0.0.3)
     faraday (0.7.6)
@@ -49,6 +51,14 @@ GEM
       method_source (~> 0.7.1)
       slop (>= 2.4.4, < 3)
     rack (1.4.1)
+    rspec (2.10.0)
+      rspec-core (~> 2.10.0)
+      rspec-expectations (~> 2.10.0)
+      rspec-mocks (~> 2.10.0)
+    rspec-core (2.10.0)
+    rspec-expectations (2.10.0)
+      diff-lcs (~> 1.1.3)
+    rspec-mocks (2.10.1)
     simple_oauth (0.1.5)
     slop (2.4.4)
     twitter (2.0.2)
@@ -68,10 +78,12 @@ PLATFORMS
 DEPENDENCIES
   activesupport
   bson_ext
+  database_cleaner
   hashie
   httpclient
   mechanize
   mongoid
   nokogiri
   pry
+  rspec
   twitter

@@ -9,3 +9,5 @@ gem "bson_ext"
 gem 'activesupport'
 gem 'httpclient'
 gem 'hashie'
+gem 'rspec'
+gem 'database_cleaner'
