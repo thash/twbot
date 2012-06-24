@@ -11,3 +11,9 @@ gem 'httpclient'
 gem 'hashie'
 gem 'rspec'
 gem 'database_cleaner'
+
+# for Hatena API
+gem 'oauth'
+gem 'sinatra'
+gem 'json'
+
