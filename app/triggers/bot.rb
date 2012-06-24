@@ -13,7 +13,8 @@ Twitter.configure do |c|
 end
 
 def update
-  b = Bookmark.get_first(0)
+  n = Bookmark.min(:remind_cnt)
+  b = Bookmark.get_first(n)
   txt = b.make_tweet(user: "T_Hash", short_level: 0)
   status = Twitter.update(txt)
   b.inc(:remind_cnt, 1)
