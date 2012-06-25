@@ -68,6 +68,7 @@ class Bookmark
     blink.scan(/\d+/).last.to_i
   end
 
+  # remove tag from comment (summary) and return String
   def tag_removed_summary(tag="あとで")
     hatena  = HatenaOAuth.new
     summary = hatena.edit_get(self.eid)[:entry][:summary]
@@ -75,6 +76,7 @@ class Bookmark
     summary.gsub(/\[#{tag}\]/, '')
   end
 
+  # update Hatena web via Hatena Bookmark API
   def remove_tag_from_hatena!(tag="あとで")
     hatena  = HatenaOAuth.new
     request_xml = make_xml(self.tag_removed_summary)
