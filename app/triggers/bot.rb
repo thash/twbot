@@ -102,8 +102,10 @@ def react_to_mentions(limit=3)
     when :retweet
       side_effect(mention, post)
     else
-      status = Twitter.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
-      BotPost.store(status) if status.present?
+      unless post == nil
+        status = Twitter.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
+        BotPost.store(status) if status.present?
+      end
       side_effect(mention, post)
     end
   end
