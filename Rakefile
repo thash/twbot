@@ -28,8 +28,8 @@ end
 
 namespace :hatena do
   task :push_to_web do
-    closed = Bookmark.closed
-    closed.each do |b|
+    target = Bookmark.closed.not_pushed_yet
+    target.each do |b|
       $logger.info "[#{Time.now.to_s(:db)}] remove [tag] from #{b.blink}"
       res = b.remove_tag_from_hatena!
       $logger.info "[#{Time.now.to_s(:db)}] #{res.to_s}"

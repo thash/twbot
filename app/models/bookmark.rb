@@ -11,11 +11,13 @@ class Bookmark
   field :bcnt,       type: Integer
   field :remind_cnt, type: Integer, default: 0
   field :closed,     type: Boolean, default: false
+  field :pushed,     type: Boolean, default: false
 
   has_and_belongs_to_many :tags
   has_many :botposts, class_name: 'BotPost'
 
   scope :closed, -> { where(closed: true) }
+  scope :not_pushed_yet, -> { where(:pushed.ne => true) }
 
   validates_presence_of :title, :link, :blink
   validates_uniqueness_of :blink
@@ -80,7 +82,8 @@ class Bookmark
   def remove_tag_from_hatena!(tag="あとで")
     hatena  = HatenaOAuth.new
     request_xml = make_xml(self.tag_removed_summary)
-    hatena.edit_put(self.eid, request_xml)
+    response = hatena.edit_put(self.eid, request_xml)
+    update_attributes(pushed: true) if response.status == 200
   end
 
   # http://developer.hatena.ne.jp/ja/documents/bookmark/apis/atom
