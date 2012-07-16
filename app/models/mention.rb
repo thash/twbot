@@ -37,6 +37,8 @@ class Mention
       :thanks
     when /(ごめん)|(すまん)|(すみません)|(申し訳ない)/
       :sorry
+    when /^RT @bot_t_hash/
+      :retweet
     else
       # TODO: add the case when in_reply_to_status_id.blank?
       :unknown

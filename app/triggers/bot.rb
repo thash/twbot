@@ -96,7 +96,12 @@ def react_to_mentions(limit=3)
 #      next
 #    elsif post.bookmark.present? && post.bookmark.closed == true
 
-    unless mention.type == :unknown
+    case mention.type
+    when :unknown
+      side_effect(mention, post)
+    when :retweet
+      side_effect(mention, post)
+    else
       status = Twitter.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
       BotPost.store(status) if status.present?
       side_effect(mention, post)
@@ -108,7 +113,7 @@ rescue => e
 end
 
 def reaction_text(mention, post=nil)
-  "@#{mention.from_user} " + 
+  "@#{mention.from_user} " +
     case mention.type
     when :read
       "#{$settings.read_replies.sample(1).first} -- 『#{post.bookmark.trunc_title(20)}』 #{post.bookmark.blink}"
@@ -129,9 +134,10 @@ def side_effect(mention, post=nil)
     post.bookmark.update_attributes(closed: true)
     $botlogger.info "[#{Time.now.to_s(:db)}]  #{mention.status_id} ... read article, closed the bookmark."
   when :dead_link
+    post.bookmark.update_attributes(closed: true)
     $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... closed the bookmark with dead link."
   when :unknown
-    $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... unknown mention type. now just skip it."
+    $botlogger.info "[#{Time.now.to_s(:db)}] Unknwon type mention (#{mention.id}: #{mention.text}) was detected. Flag it as processed."
   end
   mention.update_attributes(processed: true)
 end
