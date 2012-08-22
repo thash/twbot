@@ -28,7 +28,7 @@ end
 
 namespace :hatena do
   task :push_to_web do
-    target = Bookmark.closed.not_pushed_yet
+    target = Bookmark.closed.not_pushed_yet.limit(3)
     target.each do |b|
       $logger.info "[#{Time.now.to_s(:db)}] remove [tag] from #{b.blink}"
       res = b.remove_tag_from_hatena!
