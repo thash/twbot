@@ -1,4 +1,3 @@
-vendor/bundle
 .bundle
 secret.yml
 tmp/*

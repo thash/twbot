@@ -2,7 +2,7 @@ Dir::foreach(File.expand_path('../app/controllers/', __FILE__)) { |f|
   next if f == "." || f == ".."
   require  File.expand_path("../app/controllers/#{f}", __FILE__)
 }
-load "./vendor/bundle/ruby/1.9.1/gems/mongoid-2.4.6/lib/mongoid/railties/database.rake"
+load ".bundle/ruby/1.9.1/gems/mongoid-2.4.6/lib/mongoid/railties/database.rake"
 
 namespace :hatetw do
   task :fetch do
