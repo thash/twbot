@@ -2,7 +2,12 @@ Dir::foreach(File.expand_path('../app/controllers/', __FILE__)) { |f|
   next if f == "." || f == ".."
   require  File.expand_path("../app/controllers/#{f}", __FILE__)
 }
-load ".bundle/ruby/1.9.1/gems/mongoid-2.4.6/lib/mongoid/railties/database.rake"
+spec = Bundler.load.specs.find{|s| s.name == "mongoid" }
+raise GemNotFound, "Cound not find specified gem" unless spec
+#local => "/Users/hash/work/twitter/bot/.bundle/ruby/1.9.1/gems/mongoid-2.4.6"
+#remote=> "/u/apps/twbot/shared/bundle/ruby/1.9.1/gems/mongoid-2.4.6"
+load spec.full_gem_path + "/lib/mongoid/railties/database.rake"
+
 
 namespace :hatetw do
   task :fetch do
