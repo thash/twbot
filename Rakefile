@@ -16,6 +16,10 @@ namespace :hatetw do
     end
   end
 
+  task :test do
+    test
+  end
+
   task :update do
     update
   end
