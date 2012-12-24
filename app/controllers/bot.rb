@@ -12,6 +12,10 @@ Twitter.configure do |c|
   c.oauth_token_secret = $secret["OAUTH_TOKEN_SECRET"]
 end
 
+def test
+  Twitter.update "test"
+end
+
 def update
   n = Bookmark.min(:remind_cnt)
   b = Bookmark.get_first(n)
