@@ -5,78 +5,87 @@ Dir::foreach(File.expand_path('../../models/', __FILE__)) { |f|
   require  File.expand_path("../../models/#{f}", __FILE__)
 }
 
-def request_bookmarks(tag, page=0)
-  uri  = URI.parse("http://b.hatena.ne.jp/Hash/atomfeed?of=#{page*20}&tag=#{tag}")
-  http = Net::HTTP.new(uri.host, uri.port)
-  req  = Net::HTTP::Get.new(uri.request_uri)
-  res  = http.request(req)
-end
+class TagManager
+  attr_accessor :tag, :count
 
-def getcount(url)
-  url  = URI.encode(url)
-  uri  = URI.parse("http://api.b.st-hatena.com/entry.count?url=#{url}")
-  http = Net::HTTP.new(uri.host, uri.port)
-  req  = Net::HTTP::Get.new(uri.request_uri)
-  res  = http.request(req)
-  res.body.to_i
-end
+  def initialize(tag)
+    @tag = tag
+    @count = tagged_entries_count(escaped_tag)
+  end
 
-def extract_data(doc)
-  entries = []
-  doc.child.children.search("entry").each do |entry|
+  def escaped_tag
+    URI.escape(@tag)
+  end
 
-    # title => "twitter bootstrap railsを使ったら職が見つかり彼女も出来て - ppworks blog"
-    # link => "http://ppworks.hatenablog.jp/entry/2012/02/19/033644"
-    # blink => "http://b.hatena.ne.jp/Hash/20120307#bookmark-81508937"
-    # time => "2012-03-07 03:11:35"
-    # bcnt => 49
-    # tags => ["rails", "design"]
+  def all_bookmarks(save=false)
+    pages = count.modulo(20).zero? ? count.div(20) : count.div(20) + 1
+    bookmarks = []
+    0.upto(pages) do |page|
+      bookmarks << bookmarks_page_at(page)
+      # NOTE: compactのため漏れる可能性が微レ存
+      bookmarks.last.compact.each{|b| b.save! } if save
+      sleep 2
+    end
+    bookmarks.flatten
+  end
 
-    title = entry.search("title").inner_text
-    link  = entry.search("link")[0].attributes["href"].value
-    blink = entry.search("link")[1].attributes["href"].value
-    time  = DateTime.parse(entry.search("issued").inner_text).strftime("%Y-%m-%d %X")
-    bcnt  = getcount(link)
-    tags  = entry.xpath("dc:subject").map(&:children).map(&:inner_text).reject{|tag| tag == "あとで"}
+  def create_all_new_bookmarks!
+    all_bookmarks(true)
+  end
 
-    $logger.info "[#{Time.now.to_s(:db)}]    got: #{time.to_s} -- #{title}"
-    $logger.info "[#{Time.now.to_s(:db)}]    got:   #{blink} (#{bcnt})"
+  def bookmarks_page_at(page)
+    res = request_bookmarks(escaped_tag, page)
+    doc = Nokogiri::XML(res.body)
+    bookmarks = []
+    doc.child.children.search("entry").each do |entry|
+      bookmarks << entry2bookmark(entry)
+    end
+    bookmarks
+  end
 
-    entries << {
-      title: title,
-      link: link,
-      blink: blink,
-      time: time,
-      bcnt: bcnt,
-      tags: tags # here, it's just texts. need to create Tag object.
+  private
+
+  # you should use escaped text inside URL. (NG: あとで, OK: %E3%81%82%E3%81%A8%E3%81%A7)
+  # TODO: 200以外の処理
+  def request_bookmarks(tag, page=0)
+    uri  = URI.parse("http://b.hatena.ne.jp/Hash/atomfeed?of=#{page*20}&tag=#{tag}")
+    http = Net::HTTP.new(uri.host, uri.port)
+    req  = Net::HTTP::Get.new(uri.request_uri)
+    http.request(req)
+  end
+
+  # tagを含むブックマーク件数を取得する.
+  # title_text => "Hash's Meme Buffer / あとで (765)"
+  def tagged_entries_count(tag)
+    res = request_bookmarks(tag)
+    doc = Nokogiri::XML(res.body)
+    title_text = doc.child.search("title").first.text
+    title_text.scan(/\d+/)[-1].to_i
+  rescue
+    nil
+  end
+
+  # make a bookmark object from one entry XML
+  # sample:
+  #   * title: "twitter bootstrap railsを使ったら職が見つかり彼女も出来て - ppworks blog"
+  #   *  link: "http://ppworks.hatenablog.jp/entry/2012/02/19/033644"
+  #   * blink: "http://b.hatena.ne.jp/Hash/20120307#bookmark-81508937"
+  #   *  time: "2012-03-07 03:11:35"
+  #   *  bcnt: 49
+  #   *  tags: ["rails", "design"]
+  def entry2bookmark(entry)
+    data = {
+      title: entry.search("title").inner_text,
+       link: entry.search("link")[0].attributes["href"].value,
+      blink: entry.search("link")[1].attributes["href"].value,
+       time: DateTime.parse(entry.search("issued").inner_text).strftime("%Y-%m-%d %X"),
+       bcnt: nil, # after_initialize
+       tags: entry.xpath("dc:subject").map(&:children).map(&:inner_text).map(&:as_a_tag)
     }
+    # make bookmark object
+    Bookmark.find_or_new(data)
+  rescue
+    nil
   end
-  entries
-end
 
-def text_to_tag(data)
-  data.each do |datum|
-    datum[:tags].map!(&:as_a_tag)
-  end
-end
-
-def exec(tag, page=0)
-  $logger.info "[#{Time.now.to_s(:db)}] exec: #{tag} - p.#{page}"
-  res = request_bookmarks(URI.escape(tag), page)
-  doc = Nokogiri::XML(res.body)
-  data = extract_data(doc)
-  data = text_to_tag(data)
-
-  $logger.info "[#{Time.now.to_s(:db)}] exec: successfully got data. now save them."
-  data.map{|datum| Bookmark.create(datum)}
-  $logger.info "[#{Time.now.to_s(:db)}] Bookmark.count => #{Bookmark.count}"
-end
-
-def total_count(tag)
-  $logger.info "[#{Time.now.to_s(:db)}] total_count: #{tag}"
-  res = request_bookmarks(URI.escape(tag))
-  doc = Nokogiri::XML(res.body)
-  total = doc.child.search("title").first.text.scan(/\d+/)[-1].to_i
-  $logger.info "[#{Time.now.to_s(:db)}] total_count: => #{total}"
-  total
 end

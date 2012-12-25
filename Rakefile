@@ -1,3 +1,5 @@
+# -*- encoding: UTF-8 -*-
+
 Dir::foreach(File.expand_path('../app/controllers/', __FILE__)) { |f|
   next if f == "." || f == ".."
   require  File.expand_path("../app/controllers/#{f}", __FILE__)
@@ -10,17 +12,6 @@ load spec.full_gem_path + "/lib/mongoid/railties/database.rake"
 
 
 namespace :hatetw do
-  task :fetch do
-    tag = ENV['TAG']
-    total = total_count(tag)
-    divmod = total.divmod(20)
-    pages = divmod[1] == 0 ? divmod[0] : divmod[0] + 1
-    for i in 0..pages do
-      exec(tag, i)
-      sleep 2
-    end
-  end
-
   task :test do
     test
   end
@@ -36,6 +27,14 @@ namespace :hatetw do
 end
 
 namespace :hatena do
+  namespace :bookmarks do
+    task :create_all do
+      tag = ENV['TAG'] || 'あとで'
+      tag_mamager = TagManager.new(tag)
+      tag_mamager.create_all_new_bookmarks!
+    end
+  end
+
   task :push_to_web do
     target = Bookmark.closed.not_pushed_yet.limit(3)
     target.each do |b|

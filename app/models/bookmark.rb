@@ -24,6 +24,11 @@ class Bookmark
 
   index [:time, Mongo::DESCENDING], :background => true
 
+
+  def self.find_or_new(data)
+    self.where(blink: data[:blink]).first || self.new(data)
+  end
+
   def self.get_first(num)
     #TODO: refactoring it.
     b = Bookmark.where(closed: false, :remind_cnt.lte => num).order_by(:time, 'asc').first if b.blank?
@@ -64,6 +69,17 @@ class Bookmark
       title[0..limit] + "..."
     end
   end
+
+  def count_bookmarked_users
+    uri = URI.parse("http://api.b.st-hatena.com/entry.count?url=#{URI.escape(link)}")
+    req = Net::HTTP::Get.new(uri.request_uri)
+    res = Net::HTTP.new(uri.host, uri.port).request(req)
+    self.bcnt = res.body.to_i
+    self.save
+  rescue
+    nil
+  end
+  after_initialize :count_bookmarked_users
 
   def eid
     return nil if blink.blank?
