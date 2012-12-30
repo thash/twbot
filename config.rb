@@ -4,8 +4,15 @@ require "bundler/setup"
 Bundler.require # require all the bundled libs at once.
 
 ### config ---------------------------------
+app_environment = ENV['APP_ENV'] || "development"
+secret_path = case app_environment
+              when "production"
+                File.expand_path('../../../shared/secret.yml')
+              else
+                './secret.yml'
+              end
+$secret    = Hashie::Mash.new(YAML.load_file(secret_path))
 $settings  = Hashie::Mash.new(YAML.load_file('./settings.yml'))
-$secret    = Hashie::Mash.new(YAML.load_file('./secret.yml'))
 
 Mongoid.configure do |config|
   if ENV["HATETW_ENV"] == "test"
