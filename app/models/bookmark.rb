@@ -38,7 +38,7 @@ class Bookmark
   # fetch new bookmarks from hatena,
   # and delete records which don't have "あとで" tag any more.
   def self.refresh
-    hatena = HatenaOAuth.new
+    return HatenaOAuth.new
   end
 
   def make_tweet(options={user: "T_Hash", short_level: 0})
@@ -90,8 +90,8 @@ class Bookmark
   def tag_removed_summary(tag="あとで")
     hatena  = HatenaOAuth.new
     summary = hatena.edit_get(self.eid)[:entry][:summary]
-    # summary.scan(/\[.*?\]/) # => ["[大学]", "[anime]"]
-    summary.gsub(/\[#{tag}\]/, '')
+    # 正規表現メモ: summary.scan(/\[.*?\]/) # => ["[大学]", "[anime]"]
+    summary.gsub(/\[#{tag}\]/, '') # NOTE: "あとで" を除外してbookmark.tagsに保存しているが, この設計も見直したい.
   end
 
   # update Hatena web via Hatena Bookmark API
@@ -107,6 +107,33 @@ class Bookmark
     xml = '<entry xmlns="http://purl.org/atom/ns#"><summary type="text/plain">'
     xml += content
     xml += '</summary></entry>'
+  end
+
+  # shorten returns short url.
+  # full result looks something like this. {{{
+  # => {"status_code"=>200,
+  #  "status_txt"=>"OK",
+  #  "data"=>
+  #   {"long_url"=>
+  #     "http://m.igrs.jp/blog/2012/03/12/why-rubyists-should-try-elixir/",
+  #    "url"=>"http://bit.ly/I1R2ev",
+  #    "hash"=>"I1R2ev",
+  #    "global_hash"=>"yLG6Hd",
+  #    "new_hash"=>1}}
+  # }}}
+  def shorten(url)
+    return nil if url.blank?
+    hc = HTTPClient.new
+    fullurl = "http://api.bitly.com/v3/shorten?longUrl=#{CGI.escape(url)}&login=#{$secret.bitly.login}&apikey=#{$secret.bitly.apikey}"
+    res = Hashie::Mash.new(JSON.parse(hc.get_content(fullurl)))
+    if res.status_code != 200
+      $botlogger.info "[#{Time.now.to_s(:db)}] bit.ly API error. url: #{url}, response: #{res.to_s}"
+      return nil
+    end
+    res.data.url
+  rescue => e
+    error_log_with_trace($botlogger, e, "bit.ly API failed while shortening url: #{url}.")
+    error_mention(e)
   end
 
 end
