@@ -43,7 +43,7 @@ class Bookmark
 
   def make_tweet(options={user: "T_Hash", short_level: 0})
     txt = ""
-    txt += "@#{options[:user]} "
+    txt += "@#{options[:user]} " unless options[:user].nil?
     txt += self.time.to_date.to_s
     txt += " に"
     txt += options[:short_level] == 0 ? tagmapper(5) : tagmapper(1)

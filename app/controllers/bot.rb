@@ -26,13 +26,13 @@ class Bot
   def remind_bookmark
     n = Bookmark.min(:remind_cnt)
     b = Bookmark.get_first(n) #NOTE: すべて"あとで"タグ付きという前提で設計
-    txt = b.make_tweet(user: "T_Hash", short_level: 0)
+    txt = b.make_tweet(user: nil, short_level: 0)
     status = self.update(txt)
     b.inc(:remind_cnt, 1)
     BotPost.store(status, b)
   rescue Twitter::Error::Forbidden => e
     error_log_with_trace($botlogger, e, "Long tweet! length: #{txt.length}. Trying to shorten tweet: #{txt}")
-    txt = b.make_tweet(user: "T_Hash", short_level: 1)
+    txt = b.make_tweet(user: nil, short_level: 1)
     begin
       status = self.update(txt)
       b.inc(:remind_cnt, 1)
