@@ -24,7 +24,7 @@ class Bot
   end
 
   def remind_bookmark
-    n = Bookmark.min(:remind_cnt)
+    n = Bookmark.order_by(:remind_cnt, :asc).first.remind_cnt # 集計関数Bookmark.minの代わり
     b = Bookmark.get_first(n) #NOTE: すべて"あとで"タグ付きという前提で設計
     txt = b.make_tweet(user: nil, short_level: 0)
     status = self.update(txt)

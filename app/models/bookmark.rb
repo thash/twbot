@@ -31,8 +31,7 @@ class Bookmark
 
   def self.get_first(num)
     #TODO: refactoring it.
-    b = Bookmark.where(closed: false, :remind_cnt.lte => num).order_by(:time, 'asc').first if b.blank?
-    return b.present? ? b : nil
+    Bookmark.where(closed: false, :remind_cnt.lte => num).order_by(:time, 'asc').first
   end
 
   # fetch new bookmarks from hatena,
