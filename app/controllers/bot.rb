@@ -15,8 +15,8 @@ class Bot
     end
   end
 
-  def update(content)
-    Twitter.update(content)
+  def update(*args)
+    Twitter.update(*args)
   end
 
   def test
@@ -54,7 +54,7 @@ class Bot
   end
 
   def error_mention(e)
-    Twitter.update "@T_Hash なんか #{e.class} とかでエラった＞＜"
+    self.update "@T_Hash なんか #{e.class} とかでエラった＞＜"
   end
 
   def fetch_mentions
@@ -72,13 +72,12 @@ class Bot
     mentions = Mention.where(processed: false).limit(limit).to_a
     for mention in mentions do
       post = BotPost.where(status_id: mention.in_reply_to).first
-
-      #   宛先tweetがBotPostに登録されてないとき。直叩き更新、[fix: エラー報告]など
-      #    if post.blank?
-      #      mention.update_attributes(processed: true)
-      #      $botlogger.info "[#{Time.now.to_s(:db)}] #{mention.status_id} ... could not find BotPost related to the mention. skip it."
-      #      next
-      #    elsif post.bookmark.present? && post.bookmark.closed == true
+      if post.nil? # reply先のBotPostがDBに記録されていないとき
+        status = self.update("@#{mention.from_user} #{$settings.botpost_nil}",
+                             in_reply_to_status_id: mention.status_id)
+        BotPost.store(status) if status.present?
+        next
+      end
 
       case mention.type
       when :unknown
@@ -86,13 +85,13 @@ class Bot
       when :retweet
         side_effect(mention, post)
       else
-        unless post == nil
-          status = Twitter.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
-          BotPost.store(status) if status.present?
-        end
+        status = self.update(reaction_text(mention, post), in_reply_to_status_id: mention.status_id)
+        BotPost.store(status) if status.present?
         side_effect(mention, post)
       end
     end
+  rescue NoMethodError => e
+    error_log_with_trace($botlogger, e, "error while reacting to mentions.")
   rescue => e
     error_log_with_trace($botlogger, e, "error while reacting to mentions.")
     error_mention(e)

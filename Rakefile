@@ -11,25 +11,28 @@ raise GemNotFound, "Cound not find specified gem" unless spec
 load spec.full_gem_path + "/lib/mongoid/railties/database.rake"
 
 
-namespace :hatetw do
+namespace :bot do
   task :test do
-    test
+    bot = Bot.new
+    bot.test
   end
 
-  task :update do
-    update
+  task :remind_bookmark do
+    bot = Bot.new
+    bot.remind_bookmark
   end
 
   task :reply do
-    fetch_mentions
-    react_to_mentions(1)
+    bot = Bot.new
+    bot.fetch_mentions
+    bot.react_to_mentions(1)
   end
 end
 
 namespace :hatena do
   namespace :bookmarks do
     task :create_all do
-      tag = ENV['TAG'] || 'あとで'
+      tag = ENV['TAG'] || '縺ゅ→縺ｧ'
       tag_mamager = TagManager.new(tag)
       tag_mamager.create_all_new_bookmarks!
     end
