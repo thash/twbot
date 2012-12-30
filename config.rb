@@ -7,7 +7,7 @@ Bundler.require # require all the bundled libs at once.
 app_environment = ENV['APP_ENV'] || "development"
 secret_path = case app_environment
               when "production"
-                File.expand_path('../../../shared/secret.yml')
+                File.expand_path('../../shared/secret.yml')
               else
                 './secret.yml'
               end
