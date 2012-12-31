@@ -73,6 +73,7 @@ class Bot
     for mention in mentions do
       post = BotPost.where(status_id: mention.in_reply_to).first
       if post.nil? # reply先のBotPostがDBに記録されていないとき
+        side_effect(mention, post)
         status = self.update("@#{mention.from_user} #{$settings.botpost_nil}",
                              in_reply_to_status_id: mention.status_id)
         BotPost.store(status) if status.present?
@@ -114,6 +115,7 @@ class Bot
   end
 
   def side_effect(mention, post=nil)
+    mention.update_attributes(processed: true) and return if post.nil?
     case mention.type
     when :read
       post.bookmark.update_attributes(closed: true)
