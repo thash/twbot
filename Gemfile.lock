@@ -83,7 +83,7 @@ GEM
       faraday (~> 0.7)
       multi_json (~> 1.0)
       simple_oauth (~> 0.1)
-    tzinfo (0.3.32)
+    tzinfo (0.3.61)
     unf (0.0.5)
       unf_ext
     unf_ext (0.0.4)
