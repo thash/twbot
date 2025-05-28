@@ -21,7 +21,7 @@ GEM
       multipart-post (>= 1.2, < 3)
     hashie (1.2.0)
     httpclient (2.2.4)
-    i18n (0.6.0)
+    i18n (0.8.0)
     json (2.3.0)
     mechanize (2.3)
       domain_name (~> 0.5, >= 0.5.1)
