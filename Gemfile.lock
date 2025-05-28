@@ -50,7 +50,7 @@ GEM
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     ntlm-http (0.1.1)
-    oauth (0.4.6)
+    oauth (0.5.5)
     pry (0.9.8.4)
       coderay (~> 1.0.5)
       method_source (~> 0.7.1)
