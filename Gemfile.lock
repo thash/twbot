@@ -1,20 +1,30 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    activemodel (6.1.7.5)
-      activesupport (= 6.1.7.5)
-    activerecord (6.1.7.5)
-      activemodel (= 6.1.7.5)
-      activesupport (= 6.1.7.5)
-    activesupport (6.1.7.5)
+    activemodel (7.1.5.2)
+      activesupport (= 7.1.5.2)
+    activerecord (7.1.5.2)
+      activemodel (= 7.1.5.2)
+      activesupport (= 7.1.5.2)
+      timeout (>= 0.4.0)
+    activesupport (7.1.5.2)
+      base64
+      benchmark (>= 0.3)
+      bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
+      connection_pool (>= 2.2.5)
+      drb
       i18n (>= 1.6, < 2)
+      logger (>= 1.4.2)
       minitest (>= 5.1)
+      mutex_m
+      securerandom (>= 0.3)
       tzinfo (~> 2.0)
-      zeitwerk (~> 2.3)
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
     base64 (0.3.0)
+    benchmark (0.5.0)
+    bigdecimal (3.3.1)
     buftok (0.3.0)
     coderay (1.0.5)
     concurrent-ruby (1.3.5)
@@ -27,6 +37,7 @@ GEM
     database_cleaner-core (2.0.1)
     diff-lcs (1.6.2)
     domain_name (0.6.20240107)
+    drb (2.2.3)
     equalizer (0.0.11)
     ffi (1.17.2)
     ffi-compiler (1.3.2)
@@ -113,6 +124,7 @@ GEM
     ruby2_keywords (0.0.5)
     rubyntlm (0.6.5)
       base64
+    securerandom (0.4.1)
     simple_oauth (0.3.1)
     sinatra (4.2.0)
       logger (>= 1.6.0)
@@ -124,6 +136,7 @@ GEM
     slop (2.4.4)
     thread_safe (0.3.6)
     tilt (2.6.1)
+    timeout (0.4.4)
     twitter (8.2.0)
       addressable (~> 2.8)
       buftok (~> 0.3.0)
@@ -139,7 +152,6 @@ GEM
       concurrent-ruby (~> 1.0)
     webrick (1.9.1)
     webrobots (0.1.2)
-    zeitwerk (2.7.3)
 
 PLATFORMS
   ruby
