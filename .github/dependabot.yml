@@ -4,5 +4,5 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
-    # Dependabot will check for updates weekly and open PRs for up to 5 simultaneous updates
+    open-pull-requests-limit: 0
+# Dependabot will only create PRs for security updates
