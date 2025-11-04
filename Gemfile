@@ -5,8 +5,6 @@ gem "twitter"
 gem "nokogiri"
 gem "pry"
 gem "mechanize"
-gem "mongoid"
-gem "bson_ext"
 gem 'activesupport'
 gem 'httpclient'
 gem 'hashie'
@@ -17,4 +15,3 @@ gem 'database_cleaner'
 gem 'oauth'
 gem 'sinatra'
 gem 'json'
-
